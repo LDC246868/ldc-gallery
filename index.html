@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link, Drink & Create - Community Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #fdc830 100%);
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .header-image {
+            max-width: 300px;
+            height: auto;
+            margin: 0 auto 20px auto;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            font-size: 2.8em;
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+        }
+        
+        .tagline {
+            font-size: 1.3em;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .intro {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .intro h2 {
+            color: #ff6b35;
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+        
+        .intro p {
+            font-size: 1.2em;
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        
+        .section-header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+            border-bottom: 4px solid #ff6b35;
+        }
+        
+        .section-header h2 {
+            color: #ff6b35;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .section-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .albums-section {
+            background: white;
+            padding: 0;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+        
+        .album-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 0;
+        }
+        
+        .album-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .album-card:hover {
+            background: #fff;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        
+        .album-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .album-title {
+            font-size: 1.5em;
+            color: #ff6b35;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .album-description {
+            color: #666;
+            font-size: 1em;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .album-link {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #159895 0%, #57c5b6 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .album-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(21, 152, 149, 0.4);
+        }
+        
+        .special-album {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .special-album h2 {
+            color: #764ba2;
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+        
+        .special-album p {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+        
+        .special-album .album-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 1.1em;
+            padding: 15px 40px;
+        }
+        
+        .instructions {
+            background: #e8f5e9;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+        }
+        
+        .instructions h2 {
+            color: #159895;
+            font-size: 2em;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        
+        .step {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: #159895;
+            color: white;
+            border-radius: 50%;
+            line-height: 50px;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .step h3 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+        
+        .step p {
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+        
+        .footer h3 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        
+        .footer p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .tagline { font-size: 1.1em; }
+            .album-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://i.imgur.com/placeholder-ldc-character.png" alt="Link Drink Create" class="header-image">
+        <h1>The Link, Drink & Create Gallery</h1>
+        <p class="tagline">Our Story, Painted Together | Barbados 🇧🇧 & Trinidad & Tobago 🇹🇹</p>
+    </div>
+
+    <div class="container">
+        <div class="intro">
+            <h2>Welcome to Our Community Gallery! 🎨</h2>
+            <p>Over the past 2+ years, we've created hundreds of masterpieces together. Beach sunsets, tropical Christmas scenes, sea turtles, and so much more.</p>
+            <p>This is OUR living memory book - a space where every painting, every smile, every moment is celebrated.</p>
+            <p><strong>Whether you painted with us last week or years ago, your memories belong here. Add your photos, share your masterpieces, and relive the magic!</strong></p>
+        </div>
+
+        <!-- BARBADOS SECTION -->
+        <div class="albums-section">
+            <div class="section-header">
+                <h2>🇧🇧 Barbados Paint & Sips</h2>
+                <p>Beach sessions, sunset painting, and Caribbean creativity</p>
+            </div>
+            <div class="album-grid">
+                <div class="album-card">
+                    <div class="album-icon">🎨</div>
+                    <h3 class="album-title">LDC Studio</h3>
+                    <p class="album-description">The heart of Link, Drink & Create in Barbados. All our island memories in one place.</p>
+                    <a href="https://photos.app.goo.gl/NsMnKiAtNzUCBguz5" target="_blank" class="album-link">View & Add Photos</a>
+                </div>
+                
+                <div class="album-card">
+                    <div class="album-icon">🏖️</div>
+                    <h3 class="album-title">The Crane Resort</h3>
+                    <p class="album-description">Iconic cliff views, warm afternoons, and masterpieces created with ocean breezes.</p>
+                    <a href="https://photos.app.goo.gl/7yc4RoodntVvwTa38" target="_blank" class="album-link">View & Add Photos</a>
+                </div>
+                
+                <div class="album-card">
+                    <div class="album-icon">🌊</div>
+                    <h3 class="album-title">Coconut Court Beach</h3>
+                    <p class="album-description">Painting in the sand under grape trees. Pure Caribbean magic.</p>
+                    <a href="https://photos.app.goo.gl/LBqAESUv2xr2ub9e9" target="_blank" class="album-link">View & Add Photos</a>
+                </div>
+                
+                <div class="album-card">
+                    <div class="album-icon">🎉</div>
+                    <h3 class="album-title">Private Parties (Barbados)</h3>
+                    <p class="album-description">Birthdays, corporate events, special celebrations. Custom creativity for every occasion.</p>
+                    <a href="https://photos.app.goo.gl/QhA4Lw9hbgotSp7M9" target="_blank" class="album-link">View & Add Photos</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- TRINIDAD SECTION -->
+        <div class="albums-section">
+            <div class="section-header">
+                <h2>🇹🇹 Trinidad & Tobago Paint & Sips</h2>
+                <p>Art in the Park | The Trinidad chapter begins!</p>
+            </div>
+            <div class="album-grid">
+                <div class="album-card">
+                    <div class="album-icon">🌴</div>
+                    <h3 class="album-title">Trinidad Paint n Sip</h3>
+                    <p class="album-description">Outdoor sessions, community workshops, and home-grown Caribbean creativity. Welcome home!</p>
+                    <a href="https://photos.app.goo.gl/XhCkgPaoVzhWFXYSA" target="_blank" class="album-link">View & Add Photos</a>
+                </div>
+                
+                <div class="album-card">
+                    <div class="album-icon">🎊</div>
+                    <h3 class="album-title">Trinidad Private Events</h3>
+                    <p class="album-description">Special occasions, corporate sessions, and celebrations with a Trini twist!</p>
+                    <a href="https://photos.app.goo.gl/p4roCQthbHz8TTCk8" target="_blank" class="album-link">View & Add Photos</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- SPECIAL ALBUM -->
+        <div class="special-album">
+            <h2>🏠 Where Are They Now?</h2>
+            <p>The most special album of all! Show us where your Link, Drink & Create masterpiece ended up.</p>
+            <p>Hanging in your living room? Brightening your office? Gifted to someone you love? Every painting has a story and a forever home. <strong>Share yours!</strong></p>
+            <a href="https://photos.app.goo.gl/RsmUgcsbcQzqZvqc9" target="_blank" class="album-link">Show Us Your Masterpiece Home 💙</a>
+        </div>
+
+        <!-- INSTRUCTIONS -->
+        <div class="instructions">
+            <h2>📸 How to Add Your Photos</h2>
+            <p style="text-align: center; color: #555; font-size: 1.1em; margin-bottom: 30px;">It's easy! No account needed, just memories to share.</p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Click an Album</h3>
+                    <p>Choose the venue or event where you painted with us</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Tap "Add Photos"</h3>
+                    <p>Look for the "+" button or "Add photos" option</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Upload & Share</h3>
+                    <p>Select photos from your phone or computer and upload!</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Celebrate! 🎉</h3>
+                    <p>Your memories are now part of our community story</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <h3>🎨 Link 🍷 Drink 🌴 Create</h3>
+        <p>Barbados 🇧🇧 | Trinidad & Tobago 🇹🇹</p>
+        <p style="margin-top: 20px; font-size: 1.2em;">With Love, Support and Best Wishes 💙</p>
+        <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.8;">Art in the Park | Painting Community, One Brushstroke at a Time</p>
+    </div>
+</body>
+</html>
