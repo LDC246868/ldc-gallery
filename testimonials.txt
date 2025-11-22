@@ -1,0 +1,558 @@
+import React, { useState, useEffect } from 'react';
+import { Star, Heart, Send, CheckCircle, Clock, X, Upload } from 'lucide-react';
+
+export default function LDCTestimonials() {
+  const [view, setView] = useState('public');
+  const [testimonials, setTestimonials] = useState([]);
+  const [pendingTestimonials, setPendingTestimonials] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    location: '',
+    rating: 5,
+    experience: '',
+    memorable: '',
+    beforeAfter: '',
+    recommend: '',
+    comeback: '',
+    improvement: '',
+    photo: null,
+    photoPreview: null
+  });
+
+  useEffect(() => {
+    loadTestimonials();
+  }, []);
+
+  const loadTestimonials = async () => {
+    setLoading(true);
+    try {
+      const approvedResult = await window.storage.list('testimonial:approved:', true);
+      if (approvedResult && approvedResult.keys) {
+        const approved = await Promise.all(
+          approvedResult.keys.map(async (key) => {
+            try {
+              const result = await window.storage.get(key, true);
+              return result ? JSON.parse(result.value) : null;
+            } catch {
+              return null;
+            }
+          })
+        );
+        setTestimonials(approved.filter(Boolean).sort((a, b) => b.timestamp - a.timestamp));
+      }
+
+      const pendingResult = await window.storage.list('testimonial:pending:', true);
+      if (pendingResult && pendingResult.keys) {
+        const pending = await Promise.all(
+          pendingResult.keys.map(async (key) => {
+            try {
+              const result = await window.storage.get(key, true);
+              return result ? JSON.parse(result.value) : null;
+            } catch {
+              return null;
+            }
+          })
+        );
+        setPendingTestimonials(pending.filter(Boolean).sort((a, b) => b.timestamp - a.timestamp));
+      }
+    } catch (error) {
+      console.log('Loading testimonials for first time');
+    }
+    setLoading(false);
+  };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.size <= 5000000) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({
+          ...formData,
+          photo: reader.result,
+          photoPreview: reader.result
+        });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      alert('Please upload an image under 5MB');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.location || !formData.experience || 
+        !formData.memorable || !formData.beforeAfter || !formData.recommend || 
+        !formData.comeback) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const testimonial = {
+      ...formData,
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      status: 'pending'
+    };
+
+    try {
+      await window.storage.set(
+        `testimonial:pending:${testimonial.id}`,
+        JSON.stringify(testimonial),
+        true
+      );
+      
+      alert('Thank you! Your testimonial has been submitted for review. 🎨');
+      setShowForm(false);
+      setFormData({
+        name: '',
+        location: '',
+        rating: 5,
+        experience: '',
+        memorable: '',
+        beforeAfter: '',
+        recommend: '',
+        comeback: '',
+        improvement: '',
+        photo: null,
+        photoPreview: null
+      });
+      loadTestimonials();
+    } catch (error) {
+      alert('Error submitting testimonial. Please try again.');
+    }
+  };
+
+  const handleApprove = async (testimonial) => {
+    try {
+      await window.storage.delete(`testimonial:pending:${testimonial.id}`, true);
+      const approved = { ...testimonial, status: 'approved' };
+      await window.storage.set(
+        `testimonial:approved:${testimonial.id}`,
+        JSON.stringify(approved),
+        true
+      );
+      loadTestimonials();
+    } catch (error) {
+      alert('Error approving testimonial');
+    }
+  };
+
+  const handleReject = async (testimonial) => {
+    try {
+      await window.storage.delete(`testimonial:pending:${testimonial.id}`, true);
+      loadTestimonials();
+    } catch (error) {
+      alert('Error rejecting testimonial');
+    }
+  };
+
+  const StarRating = ({ rating }) => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`w-5 h-5 ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+        />
+      ))}
+    </div>
+  );
+
+  const TestimonialCard = ({ testimonial, showActions = false }) => (
+    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+      <div className="flex items-start gap-4">
+        {testimonial.photo ? (
+          <img
+            src={testimonial.photo}
+            alt={testimonial.name}
+            className="w-20 h-20 rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold">
+            {testimonial.name.charAt(0)}
+          </div>
+        )}
+        
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h3 className="font-bold text-lg text-gray-800">{testimonial.name}</h3>
+              <p className="text-sm text-gray-600">{testimonial.location}</p>
+            </div>
+            <StarRating rating={testimonial.rating} />
+          </div>
+          
+          <div className="space-y-3 mt-4">
+            {testimonial.experience && (
+              <div>
+                <p className="text-sm font-semibold text-purple-600">Overall Experience:</p>
+                <p className="text-gray-700">{testimonial.experience}</p>
+              </div>
+            )}
+            
+            {testimonial.memorable && (
+              <div>
+                <p className="text-sm font-semibold text-purple-600">Most Memorable:</p>
+                <p className="text-gray-700">{testimonial.memorable}</p>
+              </div>
+            )}
+            
+            {testimonial.beforeAfter && (
+              <div>
+                <p className="text-sm font-semibold text-purple-600">How I Felt:</p>
+                <p className="text-gray-700">{testimonial.beforeAfter}</p>
+              </div>
+            )}
+            
+            {testimonial.recommend && (
+              <div className="flex items-center gap-2 bg-green-50 p-3 rounded-lg">
+                <Heart className="w-5 h-5 text-green-600 fill-green-600" />
+                <p className="text-sm text-gray-700">
+                  <span className="font-semibold">Would recommend:</span> {testimonial.recommend}
+                </p>
+              </div>
+            )}
+            
+            {testimonial.comeback && (
+              <div>
+                <p className="text-sm font-semibold text-purple-600">Come Back Again?</p>
+                <p className="text-gray-700">{testimonial.comeback}</p>
+              </div>
+            )}
+            
+            {testimonial.improvement && (
+              <div>
+                <p className="text-sm font-semibold text-purple-600">Suggestions:</p>
+                <p className="text-gray-700 italic">{testimonial.improvement}</p>
+              </div>
+            )}
+          </div>
+          
+          {showActions && (
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => handleApprove(testimonial)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Approve
+              </button>
+              <button
+                onClick={() => handleReject(testimonial)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <X className="w-4 h-4" />
+                Reject
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12">
+        <div className="container mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">Community Love 💜</h1>
+          <p className="text-xl opacity-90">
+            Real stories from our Link, Drink & Create family across the Caribbean
+          </p>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex flex-wrap gap-4 mb-8 justify-between items-center">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setView('public')}
+              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                view === 'public'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white text-purple-600 hover:bg-purple-50'
+              }`}
+            >
+              Published Testimonials ({testimonials.length})
+            </button>
+            
+            {!isAdmin && (
+              <button
+                onClick={() => {
+                  const password = prompt('Enter admin password:');
+                  if (password === 'LDC2024admin') {
+                    setIsAdmin(true);
+                    setView('admin');
+                  } else if (password) {
+                    alert('Incorrect password');
+                  }
+                }}
+                className="px-6 py-2 rounded-lg font-semibold bg-white text-gray-600 hover:bg-gray-50"
+              >
+                Admin Login
+              </button>
+            )}
+            
+            {isAdmin && (
+              <button
+                onClick={() => setView('admin')}
+                className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                  view === 'admin'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white text-purple-600 hover:bg-purple-50'
+                }`}
+              >
+                Pending Review ({pendingTestimonials.length})
+              </button>
+            )}
+          </div>
+
+          {view === 'public' && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-shadow flex items-center gap-2"
+            >
+              <Heart className="w-5 h-5" />
+              Share Your Experience
+            </button>
+          )}
+        </div>
+
+        {showForm && view === 'public' && (
+          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Share Your Experience</h2>
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Location (Barbados/Trinidad/Other) *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Rate Your Experience *
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, rating: star })}
+                      className="focus:outline-none"
+                    >
+                      <Star
+                        className={`w-8 h-8 ${
+                          star <= formData.rating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  What was your overall experience like? *
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.experience}
+                  onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  What made your experience memorable? *
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.memorable}
+                  onChange={(e) => setFormData({ ...formData, memorable: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Was it the atmosphere, the instructors, the people you met, or the painting itself?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  How did you feel before vs. after the session? *
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.beforeAfter}
+                  onChange={(e) => setFormData({ ...formData, beforeAfter: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Nervous to confident? Stressed to relaxed? Tell us about your transformation!"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Would you recommend Link, Drink & Create to a friend? *
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.recommend}
+                  onChange={(e) => setFormData({ ...formData, recommend: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="Absolutely! Here's why..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Would you come back for another session? *
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.comeback}
+                  onChange={(e) => setFormData({ ...formData, comeback: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Any suggestions for improvement? (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.improvement}
+                  onChange={(e) => setFormData({ ...formData, improvement: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  placeholder="We'd love to hear how we can make your next experience even better!"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Add a Photo (Optional)
+                </label>
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer px-6 py-3 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    Choose Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  {formData.photoPreview && (
+                    <img
+                      src={formData.photoPreview}
+                      alt="Preview"
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Upload a photo of yourself or your artwork (max 5MB)
+                </p>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleSubmit}
+                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-shadow flex items-center gap-2"
+                >
+                  <Send className="w-5 h-5" />
+                  Submit Testimonial
+                </button>
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="px-8 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent"></div>
+            <p className="mt-4 text-gray-600">Loading testimonials...</p>
+          </div>
+        ) : (
+          <div>
+            {view === 'public' && (
+              <div className="space-y-6">
+                {testimonials.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                    <Heart className="w-16 h-16 text-purple-300 mx-auto mb-4" />
+                    <p className="text-xl text-gray-600">
+                      Be the first to share your experience!
+                    </p>
+                  </div>
+                ) : (
+                  testimonials.map((testimonial) => (
+                    <TestimonialCard key={testimonial.id} testimonial={testimonial} />
+                  ))
+                )}
+              </div>
+            )}
+
+            {view === 'admin' && isAdmin && (
+              <div className="space-y-6">
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-yellow-700" />
+                    <p className="text-yellow-700 font-semibold">
+                      {pendingTestimonials.length} testimonial(s) awaiting review
+                    </p>
+                  </div>
+                </div>
+
+                {pendingTestimonials.length === 0 ? (
+                  <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                    <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
+                    <p className="text-xl text-gray-600">All caught up! No pending testimonials.</p>
+                  </div>
+                ) : (
+                  pendingTestimonials.map((testimonial) => (
+                    <TestimonialCard
+                      key={testimonial.id}
+                      testimonial={testimonial}
+                      showActions={true}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
