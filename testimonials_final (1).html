@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Testimonials | Link, Drink & Create</title>
+    <meta name="description" content="Read real testimonials from our Link, Drink & Create family across Barbados and Trinidad & Tobago">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e3f2fd 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(90deg, #9c27b0 0%, #e91e63 100%);
+            color: white;
+            padding: 48px 16px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #9c27b0 0%, #e91e63 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #9c27b0;
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.1);
+        }
+        .star-rating {
+            display: flex;
+            gap: 8px;
+        }
+        .star {
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            fill: #ddd;
+            stroke: #ddd;
+        }
+        .star.active {
+            fill: #ffc107;
+            stroke: #ffc107;
+        }
+        .testimonial-card {
+            display: flex;
+            gap: 16px;
+            align-items: start;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .avatar-placeholder {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ec407a 0%, #9c27b0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .loading {
+            text-align: center;
+            padding: 48px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #9c27b0;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tag {
+            display: inline-block;
+            padding: 8px 12px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #9c27b0;
+            margin: 12px 0 4px 0;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function LDCTestimonials() {
+            const [view, setView] = useState('public');
+            const [testimonials, setTestimonials] = useState([]);
+            const [pendingTestimonials, setPendingTestimonials] = useState([]);
+            const [showForm, setShowForm] = useState(false);
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [loading, setLoading] = useState(true);
+            const [formData, setFormData] = useState({
+                name: '', location: '', rating: 5, experience: '', memorable: '',
+                beforeAfter: '', recommend: '', comeback: '', improvement: '', photo: null, photoPreview: null
+            });
+
+            useEffect(() => { loadTestimonials(); }, []);
+
+            const loadTestimonials = async () => {
+                setLoading(true);
+                try {
+                    const approvedResult = await window.storage.list('testimonial:approved:', true);
+                    if (approvedResult?.keys) {
+                        const approved = await Promise.all(approvedResult.keys.map(async (key) => {
+                            try {
+                                const result = await window.storage.get(key, true);
+                                return result ? JSON.parse(result.value) : null;
+                            } catch { return null; }
+                        }));
+                        setTestimonials(approved.filter(Boolean).sort((a, b) => b.timestamp - a.timestamp));
+                    }
+                    const pendingResult = await window.storage.list('testimonial:pending:', true);
+                    if (pendingResult?.keys) {
+                        const pending = await Promise.all(pendingResult.keys.map(async (key) => {
+                            try {
+                                const result = await window.storage.get(key, true);
+                                return result ? JSON.parse(result.value) : null;
+                            } catch { return null; }
+                        }));
+                        setPendingTestimonials(pending.filter(Boolean).sort((a, b) => b.timestamp - a.timestamp));
+                    }
+                } catch (error) {
+                    console.log('Loading testimonials for first time');
+                }
+                setLoading(false);
+            };
+
+            const handlePhotoUpload = (e) => {
+                const file = e.target.files[0];
+                if (file && file.size <= 5000000) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFormData({ ...formData, photo: reader.result, photoPreview: reader.result });
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('Please upload an image under 5MB');
+                }
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (!formData.name || !formData.location || !formData.experience || 
+                    !formData.memorable || !formData.beforeAfter || !formData.recommend || !formData.comeback) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                const testimonial = { ...formData, id: Date.now().toString(), timestamp: Date.now(), status: 'pending' };
+                try {
+                    await window.storage.set(`testimonial:pending:${testimonial.id}`, JSON.stringify(testimonial), true);
+                    alert('Thank you! Your testimonial has been submitted for review. 🎨');
+                    setShowForm(false);
+                    setFormData({ name: '', location: '', rating: 5, experience: '', memorable: '', beforeAfter: '', recommend: '', comeback: '', improvement: '', photo: null, photoPreview: null });
+                    loadTestimonials();
+                } catch (error) {
+                    alert('Error submitting testimonial. Please try again.');
+                }
+            };
+
+            const handleApprove = async (testimonial) => {
+                try {
+                    await window.storage.delete(`testimonial:pending:${testimonial.id}`, true);
+                    const approved = { ...testimonial, status: 'approved' };
+                    await window.storage.set(`testimonial:approved:${testimonial.id}`, JSON.stringify(approved), true);
+                    loadTestimonials();
+                } catch (error) {
+                    alert('Error approving testimonial');
+                }
+            };
+
+            const handleReject = async (testimonial) => {
+                try {
+                    await window.storage.delete(`testimonial:pending:${testimonial.id}`, true);
+                    loadTestimonials();
+                } catch (error) {
+                    alert('Error rejecting testimonial');
+                }
+            };
+
+            const StarRating = ({ rating }) => (
+                <div className="star-rating">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <svg key={star} className={`star ${star <= rating ? 'active' : ''}`} viewBox="0 0 24 24">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                    ))}
+                </div>
+            );
+
+            const TestimonialCard = ({ testimonial, showActions = false }) => (
+                <div className="card">
+                    <div className="testimonial-card">
+                        {testimonial.photo ? (
+                            <img src={testimonial.photo} alt={testimonial.name} className="avatar" />
+                        ) : (
+                            <div className="avatar-placeholder">{testimonial.name.charAt(0)}</div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                <div>
+                                    <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>{testimonial.name}</h3>
+                                    <p style={{ color: '#666', fontSize: '14px' }}>{testimonial.location}</p>
+                                </div>
+                                <StarRating rating={testimonial.rating} />
+                            </div>
+                            {testimonial.experience && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <div className="section-title">Overall Experience:</div>
+                                    <p>{testimonial.experience}</p>
+                                </div>
+                            )}
+                            {testimonial.memorable && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <div className="section-title">Most Memorable:</div>
+                                    <p>{testimonial.memorable}</p>
+                                </div>
+                            )}
+                            {testimonial.beforeAfter && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <div className="section-title">How I Felt:</div>
+                                    <p>{testimonial.beforeAfter}</p>
+                                </div>
+                            )}
+                            {testimonial.recommend && (
+                                <div className="tag">
+                                    <strong>Would recommend:</strong> {testimonial.recommend}
+                                </div>
+                            )}
+                            {testimonial.comeback && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <div className="section-title">Come Back Again?</div>
+                                    <p>{testimonial.comeback}</p>
+                                </div>
+                            )}
+                            {testimonial.improvement && (
+                                <div style={{ marginTop: '12px' }}>
+                                    <div className="section-title">Suggestions:</div>
+                                    <p style={{ fontStyle: 'italic' }}>{testimonial.improvement}</p>
+                                </div>
+                            )}
+                            {showActions && (
+                                <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
+                                    <button onClick={() => handleApprove(testimonial)} className="btn" style={{ background: '#4caf50', color: 'white' }}>Approve</button>
+                                    <button onClick={() => handleReject(testimonial)} className="btn" style={{ background: '#f44336', color: 'white' }}>Reject</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div>
+                    <div className="header">
+                        <div className="container">
+                            <h1 style={{ fontSize: '48px', marginBottom: '16px' }}>Community Love 💜</h1>
+                            <p style={{ fontSize: '20px', opacity: 0.9 }}>Real stories from our Link, Drink & Create family across the Caribbean</p>
+                            <a href="index.html" style={{ color: 'white', opacity: 0.8, display: 'inline-block', marginTop: '16px' }}>← Back to Gallery</a>
+                        </div>
+                    </div>
+
+                    <div className="container" style={{ paddingTop: '32px', paddingBottom: '32px' }}>
+                        <div className="flex-between" style={{ marginBottom: '32px' }}>
+                            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                                <button onClick={() => setView('public')} className="btn" style={{ background: view === 'public' ? '#9c27b0' : 'white', color: view === 'public' ? 'white' : '#9c27b0' }}>
+                                    Published Testimonials ({testimonials.length})
+                                </button>
+                                {!isAdmin && (
+                                    <button onClick={() => {
+                                        const password = prompt('Enter admin password:');
+                                        if (password === 'LDC2024admin') {
+                                            setIsAdmin(true);
+                                            setView('admin');
+                                        } else if (password) {
+                                            alert('Incorrect password');
+                                        }
+                                    }} className="btn" style={{ background: 'white', color: '#666' }}>
+                                        Admin Login
+                                    </button>
+                                )}
+                                {isAdmin && (
+                                    <button onClick={() => setView('admin')} className="btn" style={{ background: view === 'admin' ? '#9c27b0' : 'white', color: view === 'admin' ? 'white' : '#9c27b0' }}>
+                                        Pending Review ({pendingTestimonials.length})
+                                    </button>
+                                )}
+                            </div>
+                            {view === 'public' && (
+                                <button onClick={() => setShowForm(!showForm)} className="btn btn-primary">
+                                    ❤️ Share Your Experience
+                                </button>
+                            )}
+                        </div>
+
+                        {showForm && view === 'public' && (
+                            <div className="card">
+                                <h2 style={{ fontSize: '24px', marginBottom: '24px' }}>Share Your Experience</h2>
+                                <div className="form-group">
+                                    <label className="form-label">Your Name *</label>
+                                    <input type="text" className="form-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Location (Barbados/Trinidad/Other) *</label>
+                                    <input type="text" className="form-input" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Rate Your Experience *</label>
+                                    <div className="star-rating">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <svg key={star} className={`star ${star <= formData.rating ? 'active' : ''}`} viewBox="0 0 24 24" onClick={() => setFormData({ ...formData, rating: star })}>
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                            </svg>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">What was your overall experience like? *</label>
+                                    <textarea className="form-textarea" rows="3" value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: e.target.value })}></textarea>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">What made your experience memorable? *</label>
+                                    <textarea className="form-textarea" rows="3" value={formData.memorable} onChange={(e) => setFormData({ ...formData, memorable: e.target.value })} placeholder="Was it the atmosphere, the instructors, the people you met, or the painting itself?"></textarea>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">How did you feel before vs. after the session? *</label>
+                                    <textarea className="form-textarea" rows="3" value={formData.beforeAfter} onChange={(e) => setFormData({ ...formData, beforeAfter: e.target.value })} placeholder="Nervous to confident? Stressed to relaxed?"></textarea>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Would you recommend Link, Drink & Create to a friend? *</label>
+                                    <textarea className="form-textarea" rows="2" value={formData.recommend} onChange={(e) => setFormData({ ...formData, recommend: e.target.value })} placeholder="Absolutely! Here's why..."></textarea>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Would you come back for another session? *</label>
+                                    <textarea className="form-textarea" rows="2" value={formData.comeback} onChange={(e) => setFormData({ ...formData, comeback: e.target.value })}></textarea>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Any suggestions for improvement? (Optional)</label>
+                                    <textarea className="form-textarea" rows="3" value={formData.improvement} onChange={(e) => setFormData({ ...formData, improvement: e.target.value })} placeholder="We'd love to hear how we can make your next experience even better!"></textarea>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Add a Photo (Optional)</label>
+                                    <input type="file" accept="image/*" onChange={handlePhotoUpload} />
+                                    {formData.photoPreview && <img src={formData.photoPreview} alt="Preview" style={{ width: '64px', height: '64px', borderRadius: '8px', marginTop: '8px' }} />}
+                                </div>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <button onClick={handleSubmit} className="btn btn-primary">Submit Testimonial</button>
+                                    <button onClick={() => setShowForm(false)} className="btn" style={{ background: '#e0e0e0' }}>Cancel</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {loading ? (
+                            <div className="loading">
+                                <div className="spinner"></div>
+                                <p style={{ marginTop: '16px', color: '#666' }}>Loading testimonials...</p>
+                            </div>
+                        ) : (
+                            <div>
+                                {view === 'public' && (
+                                    <div>
+                                        {testimonials.length === 0 ? (
+                                            <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
+                                                <p style={{ fontSize: '20px', color: '#666' }}>Be the first to share your experience!</p>
+                                            </div>
+                                        ) : (
+                                            testimonials.map((testimonial) => <TestimonialCard key={testimonial.id} testimonial={testimonial} />)
+                                        )}
+                                    </div>
+                                )}
+                                {view === 'admin' && isAdmin && (
+                                    <div>
+                                        <div className="card" style={{ background: '#fff9c4', borderLeft: '4px solid #fbc02d', marginBottom: '24px' }}>
+                                            <p style={{ fontWeight: 600 }}>{pendingTestimonials.length} testimonial(s) awaiting review</p>
+                                        </div>
+                                        {pendingTestimonials.length === 0 ? (
+                                            <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
+                                                <p style={{ fontSize: '20px', color: '#666' }}>All caught up! No pending testimonials.</p>
+                                            </div>
+                                        ) : (
+                                            pendingTestimonials.map((testimonial) => <TestimonialCard key={testimonial.id} testimonial={testimonial} showActions={true} />)
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<LDCTestimonials />, document.getElementById('root'));
+    </script>
+</body>
+</html>
